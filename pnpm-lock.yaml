@@ -78,6 +78,9 @@ importers:
       '@vercel/og':
         specifier: ^0.5.18
         version: 0.5.19
+      '@vercel/speed-insights':
+        specifier: ^1.3.1
+        version: 1.3.1(next@13.5.5(@babel/core@7.23.2)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)
       date-fns:
         specifier: ^2.30.0
         version: 2.30.0
@@ -1711,6 +1714,29 @@ packages:
   '@vercel/og@0.5.19':
     resolution: {integrity: sha512-U/Oi+5/eCZ1YPZxSObSoiyDqqZnNJIjCd6qs9BlCHscrwP2OTfbs88hkT5qMT3HanK1lDFquONjlnrE696fgxA==}
     engines: {node: '>=16'}
+
+  '@vercel/speed-insights@1.3.1':
+    resolution: {integrity: sha512-PbEr7FrMkUrGYvlcLHGkXdCkxnylCWePx7lPxxq36DNdfo9mcUjLOmqOyPDHAOgnfqgGGdmE3XI9L/4+5fr+vQ==}
+    peerDependencies:
+      '@sveltejs/kit': ^1 || ^2
+      next: '>= 13'
+      react: ^18 || ^19 || ^19.0.0-rc
+      svelte: '>= 4'
+      vue: ^3
+      vue-router: ^4
+    peerDependenciesMeta:
+      '@sveltejs/kit':
+        optional: true
+      next:
+        optional: true
+      react:
+        optional: true
+      svelte:
+        optional: true
+      vue:
+        optional: true
+      vue-router:
+        optional: true
 
   '@whatwg-node/events@0.0.3':
     resolution: {integrity: sha512-IqnKIDWfXBJkvy/k6tzskWTc2NK3LcqHlb+KHGCrjOCH4jfQckRX0NAiIcC/vIqQkzLYw2r2CTSwAxcrtcD6lA==}
@@ -6138,6 +6164,11 @@ snapshots:
       '@resvg/resvg-wasm': 2.5.0
       satori: 0.10.9
       yoga-wasm-web: 0.3.3
+
+  '@vercel/speed-insights@1.3.1(next@13.5.5(@babel/core@7.23.2)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)':
+    optionalDependencies:
+      next: 13.5.5(@babel/core@7.23.2)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      react: 18.2.0
 
   '@whatwg-node/events@0.0.3': {}
 
