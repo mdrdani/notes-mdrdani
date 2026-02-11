@@ -17,7 +17,7 @@ export const Footer = () => {
 							rel="noopener noreferrer"
 							className="font-medium hover:underline"
 						>
-							Vercel
+							Vercel (Hobby Plan)
 						</a>
 						{' '}and{' '}
 						<a
