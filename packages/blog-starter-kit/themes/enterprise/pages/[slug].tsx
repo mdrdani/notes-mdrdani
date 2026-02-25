@@ -28,6 +28,8 @@ import { loadIframeResizer } from '@starter-kit/utils/renderer/services/embed';
 import { useEffect, useState } from 'react';
 // @ts-ignore
 import { triggerCustomWidgetEmbed } from '@starter-kit/utils/trigger-custom-widget-embed';
+import { HeadingSlugger } from '@starter-kit/utils/renderer/headingSlugger';
+const marked = require('@starter-kit/utils/renderer/marked');
 
 const AboutAuthor = dynamic(() => import('../components/about-author'), { ssr: false });
 const Subscribe = dynamic(() => import('../components/subscribe').then((mod) => mod.Subscribe));
@@ -133,11 +135,9 @@ const Post = ({ publication, post }: PostProps) => {
 				author={post.author}
 				readTimeInMinutes={post.readTimeInMinutes}
 			/>
-			<div className="flex flex-row gap-6 w-full px-5">
-				{post.features.tableOfContents.isEnabled && post.features?.tableOfContents?.items?.length > 0 && (
-					<PostTOC />
-				)}
-				<div className="flex-1 min-w-0">
+			<div className="flex w-full flex-row gap-6 px-5">
+				{post.features?.tableOfContents?.items?.length > 0 && <PostTOC />}
+				<div className="min-w-0 flex-1">
 					<MarkdownToHtml contentMarkdown={post.content.markdown} />
 				</div>
 			</div>
@@ -202,10 +202,49 @@ export const getStaticProps: GetStaticProps<Props, Params> = async ({ params }) 
 	const postData = await request(endpoint, SinglePostByPublicationDocument, { host, slug });
 
 	if (postData.publication?.post) {
+		const post = postData.publication.post;
+
+		if (!post.features?.tableOfContents?.items?.length && post.content?.markdown) {
+			try {
+				const tokens = marked.lexer(post.content.markdown);
+				const headings = tokens.filter((t: any) => t.type === 'heading' && t.depth > 1);
+				const slugger = new HeadingSlugger();
+				
+				const items: any[] = [];
+				const parentStack: any[] = [];
+			
+				headings.forEach((h: any, index: number) => {
+					const level = h.depth;
+					const title = h.text.replace(/[*\\_~`]/g, '');
+					const slug = slugger.getSlug(h.text);
+					const id = `toc-${index}`;
+			
+					while (parentStack.length > 0 && parentStack[parentStack.length - 1].level >= level) {
+						parentStack.pop();
+					}
+					const parentId = parentStack.length > 0 ? parentStack[parentStack.length - 1].id : null;
+					
+					items.push({ id, level, slug, title, parentId });
+					parentStack.push({ level, id });
+				});
+
+				if (items.length > 0) {
+					if (!post.features) {
+						post.features = { tableOfContents: { isEnabled: true, items: [] } };
+					} else if (!post.features.tableOfContents) {
+						post.features.tableOfContents = { isEnabled: true, items: [] };
+					}
+					post.features.tableOfContents.items = items;
+				}
+			} catch (err) {
+				console.error("Error generating TOC:", err);
+			}
+		}
+
 		return {
 			props: {
 				type: 'post',
-				post: postData.publication.post,
+				post: post,
 				publication: postData.publication,
 			},
 			revalidate: 1,
