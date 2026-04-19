@@ -33,6 +33,10 @@ const marked = require('@starter-kit/utils/renderer/marked');
 
 const AboutAuthor = dynamic(() => import('../components/about-author'), { ssr: false });
 const Subscribe = dynamic(() => import('../components/subscribe').then((mod) => mod.Subscribe));
+const NihBuatJajanPopup = dynamic(
+	() => import('../components/nihbuatjajan-popup').then((mod) => mod.NihBuatJajanPopup),
+	{ ssr: false },
+);
 const PostComments = dynamic(() =>
 	import('../components/post-comments').then((mod) => mod.PostComments),
 );
@@ -147,6 +151,7 @@ const Post = ({ publication, post }: PostProps) => {
 				</div>
 			)}
 			<AboutAuthor />
+			<NihBuatJajanPopup />
 			{!post.preferences.disableComments && post.comments.totalDocuments > 0 && <PostComments />}
 			<Subscribe />
 		</>
@@ -209,21 +214,21 @@ export const getStaticProps: GetStaticProps<Props, Params> = async ({ params }) 
 				const tokens = marked.lexer(post.content.markdown);
 				const headings = tokens.filter((t: any) => t.type === 'heading' && t.depth > 1);
 				const slugger = new HeadingSlugger();
-				
+
 				const items: any[] = [];
 				const parentStack: any[] = [];
-			
+
 				headings.forEach((h: any, index: number) => {
 					const level = h.depth;
 					const title = h.text.replace(/[*\\_~`]/g, '');
 					const slug = slugger.getSlug(h.text);
 					const id = `toc-${index}`;
-			
+
 					while (parentStack.length > 0 && parentStack[parentStack.length - 1].level >= level) {
 						parentStack.pop();
 					}
 					const parentId = parentStack.length > 0 ? parentStack[parentStack.length - 1].id : null;
-					
+
 					items.push({ id, level, slug, title, parentId });
 					parentStack.push({ level, id });
 				});
