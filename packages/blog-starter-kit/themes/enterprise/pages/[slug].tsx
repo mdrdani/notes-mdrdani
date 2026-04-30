@@ -14,7 +14,6 @@ import { MarkdownToHtml } from '../components/markdown-to-html';
 import { PostHeader } from '../components/post-header';
 import { PostTOC } from '../components/post-toc';
 import {
-	MorePostsByPublicationDocument,
 	PageByPublicationDocument,
 	PostFragment,
 	PostFullFragment,
@@ -159,7 +158,7 @@ const Post = ({ publication, post, morePosts }: PostProps) => {
 			)}
 			<AboutAuthor />
 			<NihBuatJajanPopup slug={post.slug} />
-			{!post.preferences.disableComments && post.comments.totalDocuments > 0 && <PostComments />}		<SuggestedArticles posts={morePosts} />			<Subscribe />
+		{!post.preferences.disableComments && post.comments.totalDocuments > 0 && <PostComments />}		<SuggestedArticles posts={morePosts} currentSlug={post.slug} />			<Subscribe />
 		</>
 	);
 };
@@ -252,14 +251,37 @@ export const getStaticProps: GetStaticProps<Props, Params> = async ({ params }) 
 			}
 		}
 
-		const morePostsData = await request(endpoint, MorePostsByPublicationDocument, {
-			first: 4,
-			host,
-		});
-		const morePosts = (morePostsData.publication?.posts.edges ?? [])
+		const tagScoringQuery = `
+			query PostsForRecommendation($host: String!, $first: Int!) {
+				publication(host: $host) {
+					posts(first: $first) {
+						edges {
+							node {
+								id title slug brief publishedAt url
+								coverImage { url }
+								author { name profilePicture }
+								tags { id name slug }
+							}
+						}
+					}
+				}
+			}
+		`;
+		const candidatesData = await request<any>(endpoint, tagScoringQuery, { host, first: 20 });
+		const currentTagSlugs = new Set((post.tags ?? []).map((t: any) => t.slug));
+		const candidates = (candidatesData?.publication?.posts?.edges ?? [])
 			.map((edge: any) => edge.node)
-			.filter((p: any) => p.slug !== post.slug)
-			.slice(0, 3);
+			.filter((p: any) => p.slug !== post.slug);
+
+		const scored = candidates.map((p: any) => ({
+			...p,
+			_score: (p.tags ?? []).filter((t: any) => currentTagSlugs.has(t.slug)).length,
+		}));
+		scored.sort((a: any, b: any) => {
+			if (b._score !== a._score) return b._score - a._score;
+			return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+		});
+		const morePosts: PostFragment[] = scored.slice(0, 3).map(({ _score, tags, ...p }: any) => p);
 
 		return {
 			props: {
