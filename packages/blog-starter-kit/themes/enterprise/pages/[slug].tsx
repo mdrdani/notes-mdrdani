@@ -151,7 +151,7 @@ const Post = ({ publication, post }: PostProps) => {
 				</div>
 			)}
 			<AboutAuthor />
-			<NihBuatJajanPopup />
+			<NihBuatJajanPopup slug={post.slug} />
 			{!post.preferences.disableComments && post.comments.totalDocuments > 0 && <PostComments />}
 			<Subscribe />
 		</>

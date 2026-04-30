@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 
-export const NihBuatJajanPopup = () => {
+type NihBuatJajanPopupProps = {
+	slug: string;
+};
+
+export const NihBuatJajanPopup = ({ slug }: NihBuatJajanPopupProps) => {
 	const [visible, setVisible] = useState(false);
-	const [dismissed, setDismissed] = useState(false);
-	const sentinelRef = useRef<HTMLDivElement>(null);
 	const widgetContainerRef = useRef<HTMLDivElement>(null);
 	const scriptLoaded = useRef(false);
+	const triggered = useRef(false);
+
+	const storageKey = `nihbuatjajan_shown_${slug}`;
 
 	const loadWidget = useCallback(() => {
 		if (scriptLoaded.current || !widgetContainerRef.current) return;
@@ -27,33 +32,42 @@ export const NihBuatJajanPopup = () => {
 	}, []);
 
 	useEffect(() => {
-		const sentinel = sentinelRef.current;
-		if (!sentinel) return;
+		try {
+			if (localStorage.getItem(storageKey)) return;
+		} catch {
+			// localStorage unavailable, continue
+		}
 
-		const observer = new IntersectionObserver(
-			([entry]) => {
-				if (entry.isIntersecting && !dismissed) {
-					setVisible(true);
-					loadWidget();
+		// Random scroll threshold between 30% and 70% of the page
+		const threshold = 0.3 + Math.random() * 0.4;
+
+		const handleScroll = () => {
+			if (triggered.current) return;
+
+			const scrolled = window.scrollY + window.innerHeight;
+			const total = document.documentElement.scrollHeight;
+			if (scrolled / total >= threshold) {
+				triggered.current = true;
+				setVisible(true);
+				loadWidget();
+				try {
+					localStorage.setItem(storageKey, '1');
+				} catch {
+					// ignore
 				}
-			},
-			{ threshold: 0.1 },
-		);
+			}
+		};
 
-		observer.observe(sentinel);
-		return () => observer.disconnect();
-	}, [dismissed, loadWidget]);
+		window.addEventListener('scroll', handleScroll, { passive: true });
+		return () => window.removeEventListener('scroll', handleScroll);
+	}, [storageKey, loadWidget]);
 
 	const handleDismiss = () => {
 		setVisible(false);
-		setDismissed(true);
 	};
 
 	return (
 		<>
-			{/* Sentinel placed at the end of the article to trigger popup */}
-			<div ref={sentinelRef} aria-hidden="true" />
-
 			{visible && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
 					<div className="relative mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-neutral-900">
