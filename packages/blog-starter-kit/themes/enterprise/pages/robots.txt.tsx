@@ -3,13 +3,15 @@ import { type GetServerSideProps } from 'next';
 const RobotsTxt = () => null;
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-	const { res } = ctx;
-	const host = process.env.NEXT_PUBLIC_HASHNODE_PUBLICATION_HOST;
+	const { res, req } = ctx;
+
+	const forwardedHost = req.headers['x-forwarded-host'];
+	const host = Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost || req.headers.host;
 	if (!host) {
 		throw new Error('Could not determine host');
 	}
-
-	const sitemapUrl = `https://${host}/sitemap.xml`;
+	const proto = req.headers['x-forwarded-proto'] || 'https';
+	const sitemapUrl = `${proto}://${host}/sitemap.xml`;
 	const robotsTxt = `
 User-agent: *
 Allow: /
